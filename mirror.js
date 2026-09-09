@@ -60,36 +60,106 @@ function fetchCrypto() {
     });
 }
 
-/* ---------- stocks (Yahoo chart API, no key; delayed — labeled) ---------- */
+/* ---------- stock feeds (BYO free key: Finnhub preferred, Twelve Data fallback) ----------
+   Yahoo's chart API sends no CORS headers, so real browsers block it — the old
+   code only ever worked in curl. There is no reliable keyless stock feed left
+   (Stooq's free CSV endpoint died in 2026). Stocks go live via the user's own
+   free-tier key, same provider logic as PAPER. Keys live in this display's
+   localStorage only — never in URLs, never in the repo. */
+
+var LS_KEYS = "mirror.feedKeys.v1";
+function loadKeys() {
+  try {
+    var j = JSON.parse(localStorage.getItem(LS_KEYS) || "{}");
+    return { finnhub: (j && j.finnhub) || "", twelve: (j && j.twelve) || "" };
+  } catch (e) { return { finnhub: "", twelve: "" }; }
+}
+function saveKeys(k) {
+  try { localStorage.setItem(LS_KEYS, JSON.stringify({ finnhub: k.finnhub || "", twelve: k.twelve || "" })); } catch (e) {}
+}
+var feedKeys = loadKeys();
+
+function finnhubQuoteUrl(sym, key) {
+  return "https://finnhub.io/api/v1/quote?symbol=" + encodeURIComponent(sym) + "&token=" + encodeURIComponent(key);
+}
+function parseFinnhub(j) {
+  // {"c":182.9,"dp":0.66,...} — c = current price, dp = % change vs prev close
+  if (j && typeof j.c === "number" && j.c > 0)
+    return { price: j.c, chg: (typeof j.dp === "number" ? j.dp : null) };
+  return null;
+}
+function twelveQuoteUrl(sym, key) {
+  return "https://api.twelvedata.com/price?symbol=" + encodeURIComponent(sym) + "&apikey=" + encodeURIComponent(key);
+}
+function parseTwelve(j) {
+  // {"price":"182.90"} — price only; the /price endpoint carries no change
+  var p = j ? parseFloat(j.price) : NaN;
+  return (p > 0) ? { price: p, chg: null } : null;
+}
+function stockProviderFor(keys) {
+  // "finnhub" | "twelve" | null — Finnhub preferred when both keys exist.
+  if (keys && keys.finnhub) return "finnhub";
+  if (keys && keys.twelve) return "twelve";
+  return null;
+}
+function stockProvider() { return stockProviderFor(feedKeys); }
+
 function fetchStocks() {
-  var pending = STOCKS.length, done = false;
-  function one(sym, host, cb) {
-    fetch("https://" + host + ".finance.yahoo.com/v8/finance/chart/" + sym + "?interval=1d&range=1d")
+  var prov = stockProvider();
+  if (!prov) {
+    // Honest no-key state: never a silent failure, never a dead number.
+    STOCKS.forEach(function (s) {
+      state[s.sym] = { price: null, chg: null, stale: false, noKey: true, note: "no key — tap clock to add one" };
+    });
+    render();
+    return;
+  }
+  var key = prov === "finnhub" ? feedKeys.finnhub : feedKeys.twelve;
+  var feedName = prov === "finnhub" ? "Finnhub" : "Twelve Data";
+  var jobs = STOCKS.map(function (s) {
+    var url = prov === "finnhub" ? finnhubQuoteUrl(s.sym, key) : twelveQuoteUrl(s.sym, key);
+    return fetch(url)
       .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
       .then(function (j) {
-        var m = j && j.chart && j.chart.result && j.chart.result[0] && j.chart.result[0].meta;
-        if (!m || !(m.regularMarketPrice > 0)) throw new Error("bad quote");
-        state[sym] = {
-          price: m.regularMarketPrice,
-          chg: typeof m.regularMarketChangePercent === "number" ? m.regularMarketChangePercent : null,
-          stale: false, note: "Yahoo · may be delayed"
-        };
-        cb(true);
+        var q = prov === "finnhub" ? parseFinnhub(j) : parseTwelve(j);
+        if (!q) throw new Error("bad quote");
+        state[s.sym] = { price: q.price, chg: q.chg, stale: false, noKey: false, note: feedName };
       })
-      .catch(function () { cb(false); });
-  }
-  STOCKS.forEach(function (s) {
-    one(s.sym, "query1", function (ok) {
-      if (ok) { render(); check(); return; }
-      one(s.sym, "query2", function (ok2) {
-        if (!ok2 && state[s.sym]) state[s.sym].stale = true;
-        render(); check();
+      .catch(function () {
+        if (state[s.sym] && !state[s.sym].noKey) state[s.sym].stale = true;
       });
-    });
   });
-  function check() {
-    if (--pending === 0 && !done) { done = true; render(); }
-  }
+  Promise.all(jobs).then(function () { render(); });
+}
+
+/* ---------- data-feed settings (tap the clock) ----------
+   Keys go into this display's localStorage only. Never in query params —
+   URLs leak into browser history, server logs, and screenshots of the mirror. */
+function openSettings() {
+  $("key-finnhub").value = feedKeys.finnhub || "";
+  $("key-twelve").value = feedKeys.twelve || "";
+  $("settings").classList.remove("hidden");
+}
+function closeSettings() { $("settings").classList.add("hidden"); }
+function wireSettings() {
+  var c = $("clock"), tc = $("to-clock");
+  if (c) c.addEventListener("click", openSettings);
+  if (tc) tc.addEventListener("click", openSettings);
+  var sv = $("keys-save"), cl = $("keys-clear"), dn = $("settings-close");
+  if (sv) sv.addEventListener("click", function () {
+    feedKeys = { finnhub: $("key-finnhub").value.trim(), twelve: $("key-twelve").value.trim() };
+    saveKeys(feedKeys);
+    closeSettings();
+    fetchStocks();
+  });
+  if (cl) cl.addEventListener("click", function () {
+    if (!confirm("Remove both API keys from this display?")) return;
+    feedKeys = { finnhub: "", twelve: "" };
+    saveKeys(feedKeys);
+    openSettings(); // refresh the (now empty) fields
+    fetchStocks();
+  });
+  if (dn) dn.addEventListener("click", closeSettings);
 }
 
 /* ---------- paper stats (Castle endpoint, optional) ---------- */
@@ -117,8 +187,9 @@ function render() {
       var chg = s ? fmtChg(s.chg) : "—";
       var cls = s && typeof s.chg === "number" ? (s.chg >= 0 ? "up" : "down") : "";
       var stale = s && s.stale ? " stale" : "";
+      var nokey = s && s.noKey ? " nokey" : "";
       var note = s && s.note ? esc(s.note) : "—";
-      return '<div class="card' + stale + '">' +
+      return '<div class="card' + stale + nokey + '">' +
         '<div class="sym">' + esc(sym) + '</div>' +
         '<div class="price">$' + price + '</div>' +
         '<div class="chg ' + cls + '">' + chg + '</div>' +
@@ -194,6 +265,16 @@ fetchCrypto(); fetchStocks(); fetchPaper();
 setInterval(fetchCrypto, CRYPTO_MS);
 setInterval(fetchStocks, STOCK_MS);
 if (STATS_URL) setInterval(fetchPaper, STATS_MS);
+wireSettings();
 render();
+
+/* node-testable surface (guarded; inert in the browser) */
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    finnhubQuoteUrl: finnhubQuoteUrl, parseFinnhub: parseFinnhub,
+    twelveQuoteUrl: twelveQuoteUrl, parseTwelve: parseTwelve,
+    stockProviderFor: stockProviderFor
+  };
+}
 
 })();

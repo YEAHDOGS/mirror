@@ -80,6 +80,35 @@ body {
 .to-track { font-size: clamp(1.6rem, 5vw, 4rem); font-weight: 700; text-align: center; line-height: 1.7; font-variant-numeric: tabular-nums; }
 .to-track .sym { color: var(--gold); }
 
+/* ---------- data-feed settings ---------- */
+.clock, .to-clock { cursor: pointer; }
+.settings {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+}
+.settings-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: clamp(1.2rem, 3vw, 2rem); width: min(560px, 100%);
+}
+.settings-title { color: var(--gold); font-weight: 800; letter-spacing: 0.35em; margin-bottom: 1rem; font-size: clamp(1rem, 2.4vw, 1.4rem); }
+.field { margin-bottom: 1rem; }
+.field label { display: block; color: var(--dim); font-size: clamp(0.7rem, 1.6vw, 0.95rem); letter-spacing: 0.12em; margin-bottom: 0.4rem; }
+.field input {
+  width: 100%; background: #000; color: var(--fg); border: 1px solid var(--line);
+  border-radius: 10px; padding: 0.9rem 1rem; font-size: 1.1rem; font-family: inherit;
+}
+.field input:focus { outline: none; border-color: var(--gold); }
+.settings-row { display: flex; gap: 0.8rem; margin: 1.2rem 0 0.8rem; }
+.settings-row button {
+  flex: 1; background: #111; color: var(--fg); border: 1px solid var(--line);
+  border-radius: 10px; padding: 0.9rem; font-size: 1rem; font-weight: 700; letter-spacing: 0.1em;
+  font-family: inherit; cursor: pointer; min-height: 52px;
+}
+#keys-save { border-color: var(--gold); color: var(--gold); }
+.settings-note { color: var(--dim); font-size: clamp(0.7rem, 1.5vw, 0.9rem); line-height: 1.5; }
+.nokey { border-style: dashed; opacity: 0.75; }
+
 /* narrow screens: stack everything, keep type huge */
 @media (max-width: 560px) {
   .cards { grid-template-columns: 1fr 1fr; }

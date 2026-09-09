@@ -25,8 +25,11 @@ Example: `index.html?mode=ticker&stats=https://castle.local:8443/paper/stats&rot
 
 ## Data
 
-- **Crypto** (BTC, ETH, SOL): CoinGecko `/coins/markets`, refreshed every 60s. Live-ish, labeled "24h".
-- **Stocks** (NVDA, TSLA, AAPL, SPY): Yahoo Finance chart API, no key needed, refreshed every ~2 min. **May be delayed** — the UI says so. If Yahoo blocks the request, the card dims and keeps its last value instead of lying. (Stooq's free CSV endpoint died in 2026, so Yahoo it is.)
+- **Crypto** (BTC, ETH, SOL): CoinGecko `/coins/markets`, refreshed every 60s. No key needed. Live-ish, labeled "24h".
+- **Stocks** (NVDA, TSLA, AAPL, SPY): your own free API key — **Finnhub** (free, 60 req/min, preferred) with **Twelve Data** as fallback. Same feeds as PAPER. Refreshed every ~2 min.
+  - **Adding the key:** tap the clock on the mirror — a small panel opens. Paste the key, hit SAVE. It lives in that display's `localStorage` only — never in the repo, never in URLs (query params leak into history and logs).
+  - **No key:** stock cards honestly say "no key — tap clock to add one" instead of showing dead numbers. Crypto cards keep working regardless.
+- The old Yahoo Finance approach is gone: Yahoo sends no CORS headers, so real browsers block it — it only ever worked in curl, never on an actual mirror. (Stooq's free CSV endpoint died in 2026, so there is no reliable keyless stock feed left.)
 - If a feed fails, that card dims and keeps its last value instead of lying.
 
 ## Paper stats JSON contract

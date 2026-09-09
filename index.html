@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIRROR — live tickers</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- scrolling ticker tape -->
+<div id="tape" class="tape"><div id="tape-track" class="tape-track"></div></div>
+
+<main id="dash">
+  <header class="topbar">
+    <div>
+      <div class="brand">MIRROR</div>
+      <div id="updated" class="updated">connecting…</div>
+    </div>
+    <div id="clock" class="clock">--:--</div>
+  </header>
+
+  <section id="cards" class="cards"></section>
+
+  <section id="paper" class="paper hidden">
+    <div class="paper-head">
+      <span class="brand">PAPER</span>
+      <span class="muted">fake money · real lessons</span>
+    </div>
+    <div id="paper-stats" class="paper-stats"></div>
+    <div id="paper-pos" class="paper-pos"></div>
+  </section>
+</main>
+
+<div id="tickeronly" class="tickeronly hidden">
+  <div class="to-clock" id="to-clock">--:--</div>
+  <div class="to-track" id="to-track"></div>
+</div>
+
+<script src="mirror.js"></script>
+</body>
+</html>

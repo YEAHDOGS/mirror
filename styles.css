@@ -1,0 +1,87 @@
+/* MIRROR — wall display. Pure black, huge type, glanceable from across the room. */
+:root {
+  --bg: #000;
+  --fg: #f5f5f5;
+  --dim: #8a8a8a;
+  --up: #22ff88;
+  --down: #ff4444;
+  --gold: #f5b942;
+  --card: #0b0b0d;
+  --line: #1c1c20;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.hidden { display: none !important; }
+
+/* ---------- ticker tape ---------- */
+.tape {
+  overflow: hidden; white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+  background: #050506;
+}
+.tape-track {
+  display: inline-block; padding: 0.55rem 0;
+  animation: tape 45s linear infinite;
+  font-size: clamp(1rem, 2.2vw, 1.6rem);
+  letter-spacing: 0.04em;
+}
+@keyframes tape { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.tick { display: inline-block; padding: 0 1.4rem; }
+.tick .sym { color: var(--fg); font-weight: 700; }
+.tick .chg-up { color: var(--up); }
+.tick .chg-down { color: var(--down); }
+.tick .sep { color: #333; padding: 0 0.2rem; }
+
+/* ---------- dashboard ---------- */
+#dash { padding: clamp(1rem, 3vw, 2.5rem); max-width: 1600px; margin: 0 auto; }
+.topbar { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.2rem; }
+.brand { font-size: clamp(1.1rem, 2.4vw, 1.7rem); font-weight: 800; letter-spacing: 0.35em; color: var(--gold); }
+.updated { color: var(--dim); font-size: clamp(0.7rem, 1.5vw, 1rem); margin-top: 0.3rem; }
+.clock { font-size: clamp(2rem, 6vw, 4.5rem); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: clamp(0.6rem, 1.5vw, 1.2rem); }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: clamp(0.9rem, 2vw, 1.6rem);
+}
+.card .sym { font-size: clamp(1rem, 2.4vw, 1.6rem); font-weight: 800; letter-spacing: 0.12em; color: var(--dim); }
+.card .price { font-size: clamp(1.7rem, 4.2vw, 3rem); font-weight: 700; font-variant-numeric: tabular-nums; margin: 0.35rem 0; }
+.card .chg { font-size: clamp(1rem, 2.6vw, 1.7rem); font-weight: 700; font-variant-numeric: tabular-nums; }
+.card .note { color: var(--dim); font-size: clamp(0.65rem, 1.4vw, 0.9rem); margin-top: 0.4rem; }
+.up { color: var(--up); } .down { color: var(--down); }
+.stale { opacity: 0.45; }
+
+/* ---------- paper stats ---------- */
+.paper { margin-top: clamp(1.2rem, 3vw, 2.2rem); border-top: 1px solid var(--line); padding-top: 1.2rem; }
+.paper-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.8rem; }
+.muted { color: var(--dim); font-size: clamp(0.75rem, 1.6vw, 1rem); }
+.paper-stats { display: flex; flex-wrap: wrap; gap: clamp(1rem, 4vw, 3rem); margin-bottom: 0.8rem; }
+.pstat .lbl { color: var(--dim); font-size: clamp(0.7rem, 1.5vw, 0.95rem); letter-spacing: 0.2em; }
+.pstat .val { font-size: clamp(1.6rem, 4vw, 2.8rem); font-weight: 700; font-variant-numeric: tabular-nums; }
+.paper-pos { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.ppos {
+  border: 1px solid var(--line); border-radius: 10px; padding: 0.55rem 0.9rem;
+  font-size: clamp(0.85rem, 1.9vw, 1.2rem); font-variant-numeric: tabular-nums;
+}
+.ppos .sym { font-weight: 800; }
+
+/* ---------- ticker-only mode ---------- */
+.tickeronly {
+  min-height: 100vh; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; gap: 2rem; padding: 2rem;
+}
+.to-clock { font-size: clamp(3rem, 12vw, 9rem); font-weight: 700; font-variant-numeric: tabular-nums; }
+.to-track { font-size: clamp(1.6rem, 5vw, 4rem); font-weight: 700; text-align: center; line-height: 1.7; font-variant-numeric: tabular-nums; }
+.to-track .sym { color: var(--gold); }
+
+/* narrow screens: stack everything, keep type huge */
+@media (max-width: 560px) {
+  .cards { grid-template-columns: 1fr 1fr; }
+  .topbar { flex-direction: column; gap: 0.4rem; }
+}

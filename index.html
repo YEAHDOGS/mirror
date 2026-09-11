@@ -3,61 +3,295 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MIRROR — live tickers</title>
-<link rel="stylesheet" href="styles.css">
+<title>MIRROR — live market tickers for your wall</title>
+<meta name="description" content="MIRROR is a smart-mirror wall dashboard: live crypto and stock tickers plus paper-trading stats. Static files, zero dependencies, no login.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yeahdogs.github.io/mirror/">
+<meta property="og:title" content="MIRROR — live market tickers for your wall">
+<meta property="og:description" content="An ambient wall dashboard: live tickers plus paper-trading stats. Pure black, huge type, readable across the room.">
+<meta property="og:image" content="https://yeahdogs.github.io/mirror/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23070807'/%3E%3Ctext x='32' y='45' font-family='monospace' font-size='36' font-weight='bold' fill='%233ce882' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23070807'/%3E%3Ctext x='32' y='45' font-family='monospace' font-size='36' font-weight='bold' fill='%233ce882' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+/* Old wall bookmarks used index.html with app query params: hand them to the app. */
+if (/[?&](mode|stats|rotate)=/i.test(location.search)) location.replace("app.html" + location.search);
+document.documentElement.classList.add("js");
+</script>
+<style>
+:root{
+  --bg:#070807; --panel:#0b0d0b; --ink:#edeade; --mut:#8f8c80;
+  --line:#1c1f1b; --grn:#3ce882; --red:#ff6161;
+  --disp:"Archivo Black",system-ui,sans-serif;
+  --body:"Archivo",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--grn);color:#070807}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+
+/* header: sticky mobile CTA */
+.top{position:sticky;top:0;z-index:50;background:rgba(7,8,7,.86);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;justify-content:space-between;height:58px}
+.wordmark{font-family:var(--disp);font-size:19px;letter-spacing:.14em;text-decoration:none}
+.wordmark .dot{color:var(--grn)}
+.btn{display:inline-block;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.06em;
+  text-decoration:none;padding:11px 20px;border:1px solid var(--grn);color:var(--grn);border-radius:3px;
+  transition:background .18s,color .18s}
+.btn:hover{background:var(--grn);color:#070807}
+.btn.solid{background:var(--grn);color:#070807}
+.btn.solid:hover{background:#5cf59b}
+.btn.ghost{border-color:var(--line);color:var(--ink)}
+.btn.ghost:hover{border-color:var(--ink);background:transparent;color:var(--ink)}
+
+/* hero */
+.hero{padding:64px 0 40px;position:relative}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.28em;color:var(--grn);margin-bottom:18px}
+.eyebrow .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--grn);
+  margin-right:10px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+h1{font-family:var(--disp);font-size:clamp(52px,15vw,150px);line-height:.95;letter-spacing:-.01em}
+h1 .thin{display:block;color:transparent;-webkit-text-stroke:1.5px var(--mut)}
+.clockline{display:flex;align-items:baseline;gap:16px;margin:28px 0 6px;flex-wrap:wrap}
+#clock{font-family:var(--mono);font-size:clamp(40px,10vw,76px);font-weight:600;letter-spacing:.04em;
+  font-variant-numeric:tabular-nums}
+#dateline{font-family:var(--mono);font-size:13px;color:var(--mut);letter-spacing:.12em}
+.lede{max-width:34ch;color:var(--mut);font-size:17px;margin:14px 0 30px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.specs{display:flex;gap:8px 22px;flex-wrap:wrap;margin-top:34px;font-family:var(--mono);
+  font-size:12px;color:var(--mut);letter-spacing:.08em}
+.specs span::before{content:"·";color:var(--grn);margin-right:8px}
+
+/* live tape */
+.tape-sec{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 0;overflow:hidden}
+.tape-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.tape-label .t{font-family:var(--mono);font-size:12px;letter-spacing:.28em;color:var(--grn)}
+.tape-label .n{font-family:var(--mono);font-size:12px;color:var(--mut)}
+.tape{overflow:hidden;white-space:nowrap;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.tape-track{display:inline-flex;gap:44px;padding-right:44px;animation:tape 28s linear infinite;will-change:transform}
+@keyframes tape{to{transform:translateX(-50%)}}
+.chip{font-family:var(--mono);font-size:15px;display:inline-flex;align-items:center;gap:10px}
+.chip .sym{font-weight:600;letter-spacing:.08em}
+.chip .px{font-variant-numeric:tabular-nums}
+.chip .ch{font-variant-numeric:tabular-nums}
+.up{color:var(--grn)} .down{color:var(--red)}
+.sk{width:150px;height:20px;border-radius:3px;background:var(--line);animation:pulse 1.4s ease-in-out infinite}
+.tape-note{margin-top:14px;font-size:13px;color:var(--mut)}
+
+/* modes: editorial bands */
+.modes{padding:70px 0 10px}
+.mode{border-top:1px solid var(--line);padding:38px 0;display:grid;gap:10px}
+.mode:last-child{border-bottom:1px solid var(--line)}
+.mode .idx{font-family:var(--mono);font-size:12px;color:var(--mut);letter-spacing:.24em}
+.mode h2{font-family:var(--disp);font-size:clamp(34px,9vw,64px);letter-spacing:.02em}
+.mode h2 .g{color:var(--grn)}
+.mode p{color:var(--mut);max-width:44ch}
+.mode a.go{font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:var(--grn);
+  text-decoration:none;display:inline-block;margin-top:6px}
+.mode a.go:hover{text-decoration:underline}
+.mode .param{font-family:var(--mono);font-size:12px;color:var(--mut);background:var(--panel);
+  border:1px solid var(--line);border-radius:3px;padding:8px 12px;display:inline-block;margin-top:10px;
+  overflow-x:auto;max-width:100%}
+
+/* setup */
+.setup{padding:70px 0}
+.setup h2,.privacy h2{font-family:var(--disp);font-size:clamp(28px,7vw,52px);margin-bottom:26px}
+.step{display:flex;gap:18px;padding:20px 0;border-top:1px solid var(--line);align-items:baseline}
+.step:last-child{border-bottom:1px solid var(--line)}
+.step .n{font-family:var(--mono);color:var(--grn);font-size:14px;min-width:34px}
+.step p{color:var(--mut)}
+.step p b{color:var(--ink);font-weight:600}
+
+/* privacy */
+.privacy{padding:10px 0 70px}
+.privacy p{color:var(--mut);max-width:52ch}
+.privacy p b{color:var(--ink)}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:34px 0 46px}
+.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+.attr{font-size:14px;color:var(--mut)}
+.attr a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--grn)}
+.foot nav{display:flex;gap:20px;font-family:var(--mono);font-size:12px;letter-spacing:.08em}
+.foot nav a{color:var(--mut);text-decoration:none}
+.foot nav a:hover{color:var(--ink)}
+
+/* reveal */
+.js [data-rv]{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.js [data-rv].on{opacity:1;transform:none}
+
+@media (min-width:760px){
+  .hero{padding:96px 0 60px}
+  .mode{grid-template-columns:80px 1fr;gap:6px 24px}
+  .mode .idx{padding-top:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  .tape-track{animation:none}
+  .eyebrow .pulse,.sk{animation:none}
+  .js [data-rv]{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+</style>
 </head>
 <body>
 
-<!-- scrolling ticker tape -->
-<div id="tape" class="tape"><div id="tape-track" class="tape-track"></div></div>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="wordmark" href="./">MIRROR<span class="dot">.</span></a>
+    <a class="btn" href="app.html">Open the mirror</a>
+  </div>
+</header>
 
-<main id="dash">
-  <header class="topbar">
-    <div>
-      <div class="brand">MIRROR</div>
-      <div id="updated" class="updated">connecting…</div>
+<main>
+  <section class="hero wrap">
+    <p class="eyebrow"><span class="pulse"></span>AMBIENT WALL DASHBOARD</p>
+    <h1>Your money,<span class="thin">on the wall.</span></h1>
+    <div class="clockline">
+      <div id="clock" aria-label="current time">--:--</div>
+      <div id="dateline"></div>
     </div>
-    <div id="clock" class="clock" title="tap for data-feed settings">--:--</div>
-  </header>
-
-  <section id="cards" class="cards"></section>
-
-  <section id="paper" class="paper hidden">
-    <div class="paper-head">
-      <span class="brand">PAPER</span>
-      <span class="muted">fake money · real lessons</span>
+    <p class="lede">Live crypto and stock tickers, plus paper-trading stats. Pure black, huge type, readable from across the room.</p>
+    <div class="cta-row">
+      <a class="btn solid" href="app.html">Open the mirror</a>
+      <a class="btn ghost" href="app.html?mode=ticker">Ticker mode</a>
     </div>
-    <div id="paper-stats" class="paper-stats"></div>
-    <div id="paper-pos" class="paper-pos"></div>
+    <div class="specs">
+      <span>static files</span><span>zero deps</span><span>no login</span><span>no cookies</span><span>no tracking</span>
+    </div>
+  </section>
+
+  <section class="tape-sec" aria-label="live crypto prices">
+    <div class="wrap">
+      <div class="tape-label">
+        <span class="t">LIVE · CRYPTO</span>
+        <span class="n" id="tape-note">24h · no key needed</span>
+      </div>
+      <div class="tape"><div class="tape-track" id="tape-track">
+        <span class="sk"></span><span class="sk"></span><span class="sk"></span>
+      </div></div>
+      <p class="tape-note">Pulled live from CoinGecko, the same feed the mirror uses. Stocks run on your own free Finnhub key.</p>
+    </div>
+  </section>
+
+  <section class="modes wrap">
+    <div class="mode" data-rv>
+      <span class="idx">01</span>
+      <div>
+        <h2>DASH<span class="g">.</span></h2>
+        <p>The full board. Clock, tickers, and your paper-trading stats in one glance.</p>
+        <a class="go" href="app.html?mode=dash">Open dash &rarr;</a>
+      </div>
+    </div>
+    <div class="mode" data-rv>
+      <span class="idx">02</span>
+      <div>
+        <h2>TICKER<span class="g">.</span></h2>
+        <p>Clock and big prices only. Made for actual mirrors.</p>
+        <div><span class="param">?mode=ticker&amp;rotate=60</span></div>
+        <a class="go" href="app.html?mode=ticker">Open ticker &rarr;</a>
+      </div>
+    </div>
+    <div class="mode" data-rv>
+      <span class="idx">03</span>
+      <div>
+        <h2>PAPER<span class="g">.</span></h2>
+        <p>Fake money, real lessons. Point the mirror at your stats endpoint and watch paper positions move.</p>
+        <div><span class="param">?stats=https://castle.local:8443/paper/stats</span></div>
+        <a class="go" href="app.html?mode=dash">Open paper &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="setup wrap">
+    <h2 data-rv>Hang it in three steps.</h2>
+    <div class="step" data-rv><span class="n">1</span><p><b>Point any browser at it.</b> Any static server works, or open the page straight from disk.</p></div>
+    <div class="step" data-rv><span class="n">2</span><p><b>Fullscreen it.</b> F11. The whole design assumes a wall, not a desk.</p></div>
+    <div class="step" data-rv><span class="n">3</span><p><b>Tap the clock to add a free stock key.</b> Keys stay in that display's localStorage. Never in the repo, never in URLs.</p></div>
+  </section>
+
+  <section class="privacy wrap">
+    <h2 data-rv>Nothing to sign up for.</h2>
+    <p data-rv><b>No accounts, no cookies, no tracking.</b> The page makes two kinds of requests: price feeds you can see, and nothing else. Stock API keys live only in the display you typed them on.</p>
   </section>
 </main>
 
-<div id="tickeronly" class="tickeronly hidden">
-  <div class="to-clock" id="to-clock" title="tap for data-feed settings">--:--</div>
-  <div class="to-track" id="to-track"></div>
-</div>
-
-<!-- data-feed settings: tap the clock. Keys stay in this display's localStorage. -->
-<div id="settings" class="settings hidden">
-  <div class="settings-card">
-    <div class="settings-title">DATA FEEDS</div>
-    <div class="field">
-      <label for="key-finnhub">FINNHUB KEY <span class="muted">free · finnhub.io · 60/min</span></label>
-      <input id="key-finnhub" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="paste key">
-    </div>
-    <div class="field">
-      <label for="key-twelve">TWELVE DATA KEY <span class="muted">free · twelvedata.com · backup</span></label>
-      <input id="key-twelve" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="paste key">
-    </div>
-    <div class="settings-row">
-      <button id="keys-save" type="button">SAVE</button>
-      <button id="keys-clear" type="button">CLEAR</button>
-      <button id="settings-close" type="button">DONE</button>
-    </div>
-    <div class="settings-note">Keys stay in this display's localStorage — never in the repo, never in URLs. Crypto needs no key.</div>
+<footer>
+  <div class="wrap foot">
+    <p class="attr">This product was made by <a href="https://wearedogs.net" rel="noopener">DOGS</a></p>
+    <nav>
+      <a href="app.html">The mirror</a>
+      <a href="https://github.com/YEAHDOGS/mirror" rel="noopener">GitHub</a>
+    </nav>
   </div>
-</div>
+</footer>
 
-<script src="mirror.js"></script>
+<script>
+(function(){
+  "use strict";
+  /* clock + date */
+  var clock=document.getElementById("clock"),dateline=document.getElementById("dateline");
+  function tick(){
+    var d=new Date(),p=function(n){return(n<10?"0":"")+n};
+    clock.textContent=p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());
+    dateline.textContent=d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}).toUpperCase();
+  }
+  tick();setInterval(tick,1000);
+
+  /* reveal on scroll */
+  var els=document.querySelectorAll("[data-rv]");
+  if("IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("on");io.unobserve(e.target)}});
+    },{threshold:.12});
+    els.forEach(function(el){io.observe(el)});
+  }else{els.forEach(function(el){el.classList.add("on")})}
+
+  /* live crypto tape */
+  var track=document.getElementById("tape-track"),note=document.getElementById("tape-note");
+  function fmt(n){
+    if(typeof n!=="number"||!isFinite(n))return "--";
+    if(n>=1000)return n.toLocaleString("en-US",{maximumFractionDigits:0});
+    return n.toLocaleString("en-US",{maximumFractionDigits:2});
+  }
+  function chip(sym,price,chg){
+    var s=document.createElement("span");s.className="chip";
+    var a=document.createElement("span");a.className="sym";a.textContent=sym;
+    var b=document.createElement("span");b.className="px";b.textContent="$"+fmt(price);
+    var c=document.createElement("span");c.className="ch "+(chg>=0?"up":"down");
+    c.textContent=(chg>=0?"\u25B2 ":"\u25BC ")+Math.abs(chg).toFixed(2)+"%";
+    s.appendChild(a);s.appendChild(b);s.appendChild(c);return s;
+  }
+  fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana&price_change_percentage=24h")
+    .then(function(r){if(!r.ok)throw new Error("feed");return r.json()})
+    .then(function(data){
+      track.innerHTML="";
+      var order={bitcoin:0,ethereum:1,solana:2};
+      data.sort(function(x,y){return(order[x.id]-order[y.id])});
+      data.forEach(function(c){
+        var sym={bitcoin:"BTC",ethereum:"ETH",solana:"SOL"}[c.id]||c.symbol.toUpperCase();
+        track.appendChild(chip(sym,c.current_price,c.price_change_percentage_24h));
+      });
+      /* duplicate for the seamless loop */
+      Array.prototype.slice.call(track.children).forEach(function(n){track.appendChild(n.cloneNode(true))});
+      note.textContent="24h · live";
+    })
+    .catch(function(){
+      track.innerHTML="";
+      var m=document.createElement("span");m.className="chip";
+      m.style.color="var(--mut)";m.textContent="feed napping, the mirror keeps last prices";
+      track.appendChild(m);note.textContent="24h · offline";
+    });
+})();
+</script>
 </body>
 </html>

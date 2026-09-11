@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIRROR — live tickers</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- scrolling ticker tape -->
+<div id="tape" class="tape"><div id="tape-track" class="tape-track"></div></div>
+
+<main id="dash">
+  <header class="topbar">
+    <div>
+      <div class="brand">MIRROR</div>
+      <div id="updated" class="updated">connecting…</div>
+    </div>
+    <div id="clock" class="clock" title="tap for data-feed settings">--:--</div>
+  </header>
+
+  <section id="cards" class="cards"></section>
+
+  <section id="paper" class="paper hidden">
+    <div class="paper-head">
+      <span class="brand">PAPER</span>
+      <span class="muted">fake money · real lessons</span>
+    </div>
+    <div id="paper-stats" class="paper-stats"></div>
+    <div id="paper-pos" class="paper-pos"></div>
+  </section>
+</main>
+
+<div id="tickeronly" class="tickeronly hidden">
+  <div class="to-clock" id="to-clock" title="tap for data-feed settings">--:--</div>
+  <div class="to-track" id="to-track"></div>
+</div>
+
+<!-- data-feed settings: tap the clock. Keys stay in this display's localStorage. -->
+<div id="settings" class="settings hidden">
+  <div class="settings-card">
+    <div class="settings-title">DATA FEEDS</div>
+    <div class="field">
+      <label for="key-finnhub">FINNHUB KEY <span class="muted">free · finnhub.io · 60/min</span></label>
+      <input id="key-finnhub" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="paste key">
+    </div>
+    <div class="field">
+      <label for="key-twelve">TWELVE DATA KEY <span class="muted">free · twelvedata.com · backup</span></label>
+      <input id="key-twelve" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="paste key">
+    </div>
+    <div class="settings-row">
+      <button id="keys-save" type="button">SAVE</button>
+      <button id="keys-clear" type="button">CLEAR</button>
+      <button id="settings-close" type="button">DONE</button>
+    </div>
+    <div class="settings-note">Keys stay in this display's localStorage — never in the repo, never in URLs. Crypto needs no key.</div>
+  </div>
+</div>
+
+<script src="mirror.js"></script>
+</body>
+</html>

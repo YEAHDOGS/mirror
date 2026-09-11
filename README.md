@@ -63,9 +63,11 @@ The Castle endpoint behind `?stats=` should return:
 
 ## Files
 
-- `index.html` — the page
+- `index.html` — the landing page (what https://yeahdogs.github.io/mirror/ shows)
+- `app.html` — the mirror dashboard itself (moved from `index.html`; same app, same query params)
 - `styles.css` — wall-display styling
 - `mirror.js` — all logic, vanilla JS, no deps
+- `404.html`, `og.png` — landing-page assets
 - `LICENSE` — MIT
 
 **MIRROR — watch the money from across the room.**
